@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eBay Sales Analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 0.95em;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .search-form {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 0.9em;
+        }
+
+        .form-group input {
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.95em;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group small {
+            margin-top: 5px;
+            color: #666;
+            font-size: 0.85em;
+        }
+
+        .search-button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .search-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .search-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-section {
+            display: none;
+        }
+
+        .results-section.active {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-card .label {
+            font-size: 0.85em;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .stat-card .value {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        .profit-section {
+            background: #f0f4ff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .profit-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .profit-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .profit-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+        }
+
+        .profit-item .label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .profit-item .value {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f8f9fa;
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e0e0e0;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            background: #e9ecef;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .export-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .export-button:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .info {
+            background: #e7f3ff;
+            color: #0066cc;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>eBay Sales Analyzer</h1>
+            <p>Analyze recent eBay sales with outlier protection to determine optimal listing prices</p>
+        </div>
+
+        <div class="content">
+            <div class="search-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="searchTerm">Search Term *</label>
+                        <input type="text" id="searchTerm" placeholder="e.g., Pokemon Charizard" required>
+                        <small>Title-only search</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="maxResults">Max Results</label>
+                        <input type="number" id="maxResults" value="100" min="1" max="200">
+                        <small>Before filtering</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="days">Days Back</label>
+                        <input type="number" id="days" value="90" min="1" max="365">
+                        <small>Search period</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="stdMultiplier">Std Dev Multiplier</label>
+                        <input type="number" id="stdMultiplier" value="1.5" min="0.5" max="5" step="0.1">
+                        <small>Outlier threshold</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="purchasePrice">Purchase Price (optional)</label>
+                        <input type="number" id="purchasePrice" placeholder="0.00" step="0.01" min="0">
+                        <small>For profit calculations</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="excludeWords">Exclude Words</label>
+                        <input type="text" id="excludeWords" placeholder="damaged, broken">
+                        <small>Comma-separated</small>
+                    </div>
+                </div>
+
+                <button class="search-button" onclick="performSearch()">Search eBay Sold Listings</button>
+            </div>
+
+            <div id="loadingSection" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Fetching and analyzing eBay listings...</p>
+            </div>
+
+            <div id="errorSection" style="display: none;"></div>
+
+            <div id="resultsSection" class="results-section">
+                <div class="stats-grid" id="statsGrid"></div>
+
+                <div class="profit-section" id="profitSection" style="display: none;">
+                    <h3>Profit Analysis</h3>
+                    <div class="profit-grid" id="profitGrid"></div>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable('Date')">Date</th>
+                                <th onclick="sortTable('Title')">Title</th>
+                                <th onclick="sortTable('Price')">Price</th>
+                                <th onclick="sortTable('Type')">Type</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTable"></tbody>
+                    </table>
+                </div>
+
+                <button class="export-button" onclick="exportToCSV()">Export to CSV</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentResults = [];
+        let filteredResults = [];
+        let currentSort = { column: 'Date', ascending: false };
+
+        async function performSearch() {
+            const searchTerm = document.getElementById('searchTerm').value.trim();
+            if (!searchTerm) {
+                showError('Please enter a search term');
+                return;
+            }
+
+            const maxResults = parseInt(document.getElementById('maxResults').value);
+            const days = parseInt(document.getElementById('days').value);
+            const stdMultiplier = parseFloat(document.getElementById('stdMultiplier').value);
+            const purchasePrice = parseFloat(document.getElementById('purchasePrice').value) || null;
+            const excludeWords = document.getElementById('excludeWords').value
+                .split(',')
+                .map(w => w.trim().toLowerCase())
+                .filter(w => w);
+
+            // Show loading, hide results and errors
+            document.getElementById('loadingSection').style.display = 'block';
+            document.getElementById('resultsSection').classList.remove('active');
+            document.getElementById('errorSection').style.display = 'none';
+            document.querySelector('.search-button').disabled = true;
+
+            try {
+                const results = await fetchEbayListings(searchTerm, maxResults, days, excludeWords);
+
+                if (results.length === 0) {
+                    showError('No results found. Try adjusting your search terms or date range.');
+                    return;
+                }
+
+                // Filter outliers
+                const { filtered, removed } = filterOutliers(results, stdMultiplier);
+                filteredResults = filtered;
+
+                if (filteredResults.length === 0) {
+                    showError('All results were filtered as outliers. Try adjusting the std dev multiplier.');
+                    return;
+                }
+
+                // Display results
+                displayResults(filteredResults, purchasePrice, removed, stdMultiplier);
+
+            } catch (error) {
+                showError('Error fetching data: ' + error.message);
+            } finally {
+                document.getElementById('loadingSection').style.display = 'none';
+                document.querySelector('.search-button').disabled = false;
+            }
+        }
+
+        async function fetchEbayListings(searchTerm, maxResults, days, excludeWords) {
+            const url = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(searchTerm)}&_sop=10&LH_Sold=1&LH_Complete=1&LH_TitleDesc=0`;
+
+            // Note: Direct scraping from client-side will be blocked by CORS
+            // This is a demonstration. In production, you'd need a backend proxy
+            const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+
+            try {
+                const response = await fetch(proxyUrl);
+                const html = await response.text();
+                return parseEbayHTML(html, days, maxResults, excludeWords);
+            } catch (error) {
+                throw new Error('Unable to fetch eBay data. CORS restrictions may apply.');
+            }
+        }
+
+        function parseEbayHTML(html, days, maxResults, excludeWords) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const listings = doc.querySelectorAll('li.s-item');
+            const dateLimit = new Date();
+            dateLimit.setDate(dateLimit.getDate() - days);
+            const results = [];
+
+            for (let i = 1; i < listings.length && results.length < maxResults; i++) {
+                const listing = listings[i];
+
+                const titleElem = listing.querySelector('.s-item__title');
+                const priceElem = listing.querySelector('.s-item__price');
+                const dateElem = listing.querySelector('.s-item__caption--row');
+                const linkElem = listing.querySelector('.s-item__link');
+
+                if (!titleElem || !priceElem || !dateElem || !linkElem) continue;
+
+                const title = titleElem.textContent.trim();
+
+                // Exclude words check
+                if (excludeWords.length > 0) {
+                    const titleLower = title.toLowerCase();
+                    if (excludeWords.some(word => titleLower.includes(word))) continue;
+                }
+
+                // Parse price
+                let priceText = priceElem.textContent.trim().replace(/[$,]/g, '');
+                if (priceText.includes(' to ')) {
+                    priceText = priceText.split(' to ')[0];
+                }
+                const price = parseFloat(priceText);
+                if (isNaN(price)) continue;
+
+                // Parse date
+                const dateText = dateElem.textContent.trim();
+                const dateMatch = dateText.match(/Sold\s+(\w+)\s+(\d+),\s+(\d{4})/);
+                if (!dateMatch) continue;
+
+                const dateSold = new Date(`${dateMatch[1]} ${dateMatch[2]}, ${dateMatch[3]}`);
+                if (dateSold < dateLimit) continue;
+
+                // Determine sale type
+                let saleType = 'Auction';
+                if (listing.querySelector('.s-item__formatBuyItNow')) {
+                    saleType = 'Buy It Now';
+                } else if (listing.querySelector('.s-item__formatBestOfferAccepted')) {
+                    saleType = 'Best Offer';
+                }
+
+                results.push({
+                    Date: dateSold.toISOString().split('T')[0],
+                    Title: title,
+                    Price: price,
+                    Type: saleType,
+                    Link: linkElem.href
+                });
+            }
+
+            return results;
+        }
+
+        function filterOutliers(data, stdMultiplier) {
+            if (data.length === 0) return { filtered: [], removed: 0 };
+
+            const prices = data.map(d => d.Price);
+            const mean = prices.reduce((a, b) => a + b, 0) / prices.length;
+            const variance = prices.reduce((sum, price) => sum + Math.pow(price - mean, 2), 0) / prices.length;
+            const stdDev = Math.sqrt(variance);
+
+            const filtered = data.filter(item => {
+                const zScore = Math.abs((item.Price - mean) / stdDev);
+                return zScore <= stdMultiplier;
+            });
+
+            return { filtered, removed: data.length - filtered.length };
+        }
+
+        function displayResults(results, purchasePrice, removedCount, stdMultiplier) {
+            currentResults = results;
+
+            // Calculate statistics
+            const prices = results.map(r => r.Price);
+            const mean = prices.reduce((a, b) => a + b, 0) / prices.length;
+            const variance = prices.reduce((sum, price) => sum + Math.pow(price - mean, 2), 0) / prices.length;
+            const stdDev = Math.sqrt(variance);
+            const min = Math.min(...prices);
+            const max = Math.max(...prices);
+
+            // Display stats
+            const statsHTML = `
+                <div class="stat-card">
+                    <div class="label">Count</div>
+                    <div class="value">${results.length}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Mean Price</div>
+                    <div class="value">$${mean.toFixed(2)}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Std Dev</div>
+                    <div class="value">$${stdDev.toFixed(2)}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Price Range</div>
+                    <div class="value">$${min.toFixed(2)} - $${max.toFixed(2)}</div>
+                </div>
+            `;
+            document.getElementById('statsGrid').innerHTML = statsHTML;
+
+            // Show info about filtering
+            if (removedCount > 0) {
+                showInfo(`Filtered out ${removedCount} outliers (>${stdMultiplier}σ from mean $${mean.toFixed(2)})`);
+            }
+
+            // Profit calculations
+            if (purchasePrice !== null) {
+                const suggestedPrice = mean;
+                const fees = suggestedPrice * 0.13;
+                const shipping = 5.00;
+                const netProceeds = suggestedPrice * 0.87 - shipping;
+                const profit = netProceeds - purchasePrice;
+                const priceFor20 = (20 + purchasePrice + shipping) / 0.87;
+
+                const profitHTML = `
+                    <div class="profit-item">
+                        <span class="label">Suggested Sale Price</span>
+                        <span class="value">$${suggestedPrice.toFixed(2)}</span>
+                    </div>
+                    <div class="profit-item">
+                        <span class="label">eBay Fees (13%)</span>
+                        <span class="value">$${fees.toFixed(2)}</span>
+                    </div>
+                    <div class="profit-item">
+                        <span class="label">Shipping</span>
+                        <span class="value">$${shipping.toFixed(2)}</span>
+                    </div>
+                    <div class="profit-item">
+                        <span class="label">Net Proceeds</span>
+                        <span class="value">$${netProceeds.toFixed(2)}</span>
+                    </div>
+                    <div class="profit-item">
+                        <span class="label">Profit</span>
+                        <span class="value" style="color: ${profit >= 0 ? '#28a745' : '#dc3545'}">$${profit.toFixed(2)}</span>
+                    </div>
+                    <div class="profit-item">
+                        <span class="label">Price for $20 Profit</span>
+                        <span class="value">$${priceFor20.toFixed(2)}</span>
+                    </div>
+                `;
+                document.getElementById('profitGrid').innerHTML = profitHTML;
+                document.getElementById('profitSection').style.display = 'block';
+            } else {
+                document.getElementById('profitSection').style.display = 'none';
+            }
+
+            // Display table
+            renderTable(results);
+
+            document.getElementById('resultsSection').classList.add('active');
+        }
+
+        function renderTable(results) {
+            const tbody = document.getElementById('resultsTable');
+            tbody.innerHTML = results.map(item => `
+                <tr>
+                    <td>${item.Date}</td>
+                    <td><a href="${item.Link}" target="_blank" style="color: #667eea; text-decoration: none;">${item.Title}</a></td>
+                    <td>$${item.Price.toFixed(2)}</td>
+                    <td>${item.Type}</td>
+                </tr>
+            `).join('');
+        }
+
+        function sortTable(column) {
+            if (currentSort.column === column) {
+                currentSort.ascending = !currentSort.ascending;
+            } else {
+                currentSort.column = column;
+                currentSort.ascending = true;
+            }
+
+            const sorted = [...filteredResults].sort((a, b) => {
+                let aVal = a[column];
+                let bVal = b[column];
+
+                if (column === 'Price') {
+                    return currentSort.ascending ? aVal - bVal : bVal - aVal;
+                } else {
+                    if (aVal < bVal) return currentSort.ascending ? -1 : 1;
+                    if (aVal > bVal) return currentSort.ascending ? 1 : -1;
+                    return 0;
+                }
+            });
+
+            renderTable(sorted);
+        }
+
+        function exportToCSV() {
+            const headers = ['Date', 'Title', 'Price', 'Type', 'Link'];
+            const rows = filteredResults.map(item => [
+                item.Date,
+                `"${item.Title.replace(/"/g, '""')}"`,
+                item.Price,
+                item.Type,
+                item.Link
+            ]);
+
+            const csv = [
+                headers.join(','),
+                ...rows.map(row => row.join(','))
+            ].join('\n');
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ebay_results_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        function showError(message) {
+            const errorSection = document.getElementById('errorSection');
+            errorSection.innerHTML = `<div class="error">${message}</div>`;
+            errorSection.style.display = 'block';
+        }
+
+        function showInfo(message) {
+            const errorSection = document.getElementById('errorSection');
+            errorSection.innerHTML = `<div class="info">${message}</div>`;
+            errorSection.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
